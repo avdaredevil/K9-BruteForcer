@@ -14,6 +14,48 @@
 |===============================================================>|
 #>
 param([Alias("Psw","Password")][String[]]$Passwords,[Alias("Dict","Dictionary")][String[]]$Dictionaries,[Switch]$Debug=$False,[Alias("ShowIE","ShowBrowser")][Switch]$ShowIEWIndow=$False,[Alias("SPB","Progress")][Switch]$ShowProgressBar=$False)
+# =======================================START=OF=COMPILER==========================================================|
+#    The Following Code was added by AP-Compiler Version [1.0] To Make this program independent of AP-Core Engine
+# ==================================================================================================================|
+function KeyPressed {
+param([Parameter(Mandatory=$True)][String[]]$Key, $Store="^^^")
+
+    if ($Store -eq "^^^" -and $Host.UI.RawUI.KeyAvailable) {$Store = $Host.UI.RawUI.ReadKey("IncludeKeyUp,NoEcho")} else {if ($Store -eq "^^^") {return $False}}
+    $Ans = $False
+    $Key | % {
+        $SOURCE = $_
+        try {
+            $Ans = $Ans -or (KeyPressedCode $SOURCE $Store)
+        } catch {
+            Foreach ($K in $SOURCE) {
+                [String]$K = $K
+                if ($K.length -gt 4 -and ($K[0,1,-1,-2] -join("")) -eq "~~~~") {
+                    $Ans = $ANS -or (KeyPressedCode (KeyTranslate($K)) $Store)
+                } else {
+                    $Ans = $ANS -or ($K.chars(0) -in $Store.Character)
+                }
+            }
+        }
+    }
+    return $Ans
+}
+
+function Write-AP {
+param([Parameter(Mandatory=$True)][String]$Text)
+
+    $acc  = @(('+','2'),('-','12'),('!','14'),('*','3'))
+    $tb   = '';$func   = $false
+    while ($Text.chars(0) -eq 'x') {$func = $true; $Text = $Text.substring(1).trim()}
+    while ($Text.chars(0) -eq '>') {$tb += "    "; $Text = $Text.substring(1).trim()}
+    $Sign = $Text.chars(0)
+    $Text = $Text.substring(1).trim().replace('/x\','').replace('[.]','[Current Directory]')
+    $vers = $false
+    foreach ($ar in $acc) {if ($ar[0] -eq $sign) {$vers = $true; $clr = $ar[1]; $Sign = "[${Sign}] "}}
+    if (!$vers) {Throw "Incorrect Sign [$Sign] Passed!"}
+    if (!($Silent -and $Sign -eq '[*] ')) {if ($func)  {Write-Host -nonewline -f $clr $tb$Sign$Text} else {write-host -f $clr $tb$Sign$Text}}
+}
+
+# ========================================END=OF=COMPILER===========================================================|
 . .\Modules.ps1 | out-null
 try {
     if ((Get-Service -Name bckwfs).status -ne "Running") {
